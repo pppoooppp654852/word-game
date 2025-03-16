@@ -2,8 +2,9 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 // 匯入四個陣營資料
 const teamsData = require('./data/teamData.js');
@@ -11,6 +12,7 @@ const teamsData = require('./data/teamData.js');
 // 啟用 CORS & 解析 JSON body
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 你原本的遊戲流程控制變數 (可保留)
 let gameState = {
@@ -70,6 +72,12 @@ app.post('/next-step', (req, res) => {
 
   console.log('Game step updated:', gameState.currentStep);
   return res.json({ status: 'OK', gameState });
+});
+
+// 讓 React 進行路由處理 (SPA)
+// 這樣直接打開 `/` 會顯示 React 頁面
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {
