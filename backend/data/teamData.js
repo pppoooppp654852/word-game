@@ -13,7 +13,7 @@ class Team {
   const teamsData = {
     1: new Team(
       1,
-      'Creeper Clan',
+      '苦力怕軍團',
       '神出鬼沒、行動隱密，崇尚爆炸式的策略。',
       80,
       60,
@@ -21,7 +21,7 @@ class Team {
     ),
     2: new Team(
       2,
-      'Ender Knights',
+      '終界騎士團',
       '來自終界的神秘騎士，擁有瞬移般的行動力。',
       70,
       65,
@@ -29,7 +29,7 @@ class Team {
     ),
     3: new Team(
       3,
-      'Nether Nomads',
+      '地獄熔岩族',
       '在地獄地形中崛起的游牧民族，以火焰和熔岩為盟友。',
       60,
       50,
@@ -37,7 +37,7 @@ class Team {
     ),
     4: new Team(
       4,
-      'Redstone Rebels',
+      '紅石革命軍',
       '精通紅石科技的革命陣營，擅長機關與自動化。',
       90,
       80,

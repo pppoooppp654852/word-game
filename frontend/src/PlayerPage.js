@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 
+const statusWording = {
+  waiting: '等待主持人下一步',
+  voting: '請為你的陣營選擇行動',
+  // 其他狀態可以持續擴充
+};
+
 function PlayerPage() {
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(Cookies.get('selectedTeam') || '');
@@ -49,6 +55,8 @@ function PlayerPage() {
       .catch((err) => console.error('Error:', err));
   };
 
+  const selectedTeamInfo = teams.find(team => team.id === selectedTeam);
+
   return (
     <div style={{ margin: '20px' }}>
       <h1>小遊戲參與</h1>
@@ -64,6 +72,9 @@ function PlayerPage() {
             ))}
           </select>
           <button onClick={handleConfirm} disabled={!selectedTeam}>確認</button>
+          {selectedTeamInfo && (
+            <p>隊伍描述: {selectedTeamInfo.description}</p>
+          )}
         </div>
       )}
 
@@ -71,7 +82,7 @@ function PlayerPage() {
       {isConfirmed && (
         <div>
           <h2>目前階段：{gameState?.currentStep || '無資料'}</h2>
-          <p>狀態：{gameState?.status || '無資料'}</p>
+          <p>遊戲狀態：{gameState?.status || '無資料'}</p>
           <button onClick={handleRefresh}>刷新頁面</button>
         </div>
       )}

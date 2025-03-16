@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 你原本的遊戲流程控制變數 (可保留)
 let gameState = {
   currentStep: 1,
-  status: 'WAITING'
+  status: 'waiting'
 };
 
 let logData = [];
@@ -27,7 +27,8 @@ app.get('/teams', (req, res) => {
   // 這裡若只想回傳「id 與名稱」，可從 teamsData 轉成一個陣列
   const teamList = Object.entries(teamsData).map(([id, info]) => ({
     id, 
-    name: info.teamName
+    name: info.teamName,
+    description: info.description
   }));
   return res.json({ teams: teamList });
 });

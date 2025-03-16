@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from 'react';
 
+const statusWording = {
+  waiting: '等待主持人下一步',
+  voting: '請為你的陣營選擇行動',
+  // 其他狀態可以持續擴充
+};
+
 function Dashboard() {
   const [gameState, setGameState] = useState(null);
   const [teamsData, setTeamsData] = useState({});
 
   useEffect(() => {
-    handleRefresh();
+    
   }, []);
 
-  const handleRefresh = () => {
-    fetch('http://localhost:3001/game-state')
-      .then((res) => res.json())
-      .then((data) => {
-        setGameState(data.gameState);
-        setTeamsData(data.teamsData);
-      })
-      .catch((err) => console.error('Error:', err));
-  };
 
   return (
     <div style={{ margin: '20px' }}>
@@ -24,8 +21,7 @@ function Dashboard() {
 
       <div>
         <h2>目前回合：{gameState?.currentStep || '無資料'}</h2>
-        <p>狀態：{gameState?.status || '無資料'}</p>
-        <button onClick={handleRefresh}>刷新狀態</button>
+        <p>遊戲狀態：{statusWording[gameState?.status] || gameState?.status}</p>
       </div>
 
       <h2>陣營狀態</h2>
