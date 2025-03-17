@@ -35,12 +35,16 @@ let gameStates = {
     text: '請為你的陣營選擇行動',
     currentStep: 1,
   },
+  generating: {
+    status: 'generating',
+    text: '根據各陣營行動，生成新的世界描述',
+  }
 };
 
 let currentGameState = gameStates['waitingTeam'];
 
 // 啟用 CORS & 解析 JSON body
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -96,7 +100,8 @@ app.post('/submit-choice', (req, res) => {
   if (!teamsData[teamId]) {
     return res.status(400).json({ status: 'FAIL', message: '無效的 teamId' });
   }
-  console.log('User teamId:', teamId, 'and choice:', choice);
+  teamsData[teamId].actions[choice].count += 1;
+  io.emit('gameStateUpdated', { teamsData });
   return res.json({ status: 'OK' });
 });
 
@@ -107,18 +112,21 @@ app.post('/next-step', (req, res) => {
     currentGameState = gameStates['voting'];
   }
 
-  // 推播給所有連線中的 dashboard
-  io.emit('gameStateUpdated', { currentGameState, teamsData, storyData });
-
+  // 若目前為投票階段，則進入生成階段
+  if (currentGameState.status === 'voting') {
+    currentGameState.status = gameStates['generating'].status;
+    currentGameState.text = gameStates['generating'].text;
+    
+  }
   
   //... 進行其他遊戲流程控制
   // 1. 將各陣營選項傳送至LLM，返回下一回合world description
   // 2. 根據目前world description，生成各陣營的選項
   // 3. 將各陣營的選項傳送至前端
   
-  console.log('Game step updated:', currentGameState.currentStep);
+  // 推播給所有連線中的 dashboard
+  io.emit('gameStateUpdated', { currentGameState, teamsData, storyData });
 
-  res.json({ success: true, currentGameState });
   return res.json({ status: 'OK', currentGameState });
 });
 

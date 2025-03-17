@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 
-const statusWording = {
-  waiting: '等待主持人下一步',
-  voting: '請為你的陣營選擇行動',
-  // 其他狀態可以持續擴充
-};
-
 function PlayerPage() {
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(Cookies.get('selectedTeam') || '');
@@ -14,6 +8,7 @@ function PlayerPage() {
   const [gameState, setGameState] = useState(null);
   const [teamsData, setTeamsData] = useState({});
   const [selectedAction, setSelectedAction] = useState('');
+  const [isSelectedAction, setIsSelectedAction] = useState(false);
 
   useEffect(() => {
     // 取得隊伍列表
@@ -52,6 +47,8 @@ function PlayerPage() {
       .then((data) => {
         setGameState(data.currentGameState);
         setTeamsData(data.teamsData);
+        console.log('game-state:', data);
+        console.log('teamsData:', data.teamsData);
       })
       .catch((err) => console.error('Error:', err));
   };
@@ -73,6 +70,7 @@ function PlayerPage() {
       .then((result) => {
         if (result.status === 'OK') {
           alert('行動提交成功');
+          setIsSelectedAction(true);
         } else {
           alert('行動提交失敗');
         }
@@ -107,36 +105,41 @@ function PlayerPage() {
       {/* 只有在選擇隊伍後才顯示遊戲資訊和刷新按鈕 */}
       {isConfirmed && (
         <div>
-          <h2>目前階段：{gameState?.currentStep || '無資料'}</h2>
           <p> 你的隊伍是: {selectedTeamInfo?.name || '無資料'}</p>
-          <p>遊戲狀態：{gameState?.text || '無資料'}</p>
+          <p>遊戲狀態：
+            {gameState?.status === 'waiting-team' && gameState?.text}
+            {gameState?.status === 'voting' && !isSelectedAction && gameState?.text}
+            {gameState?.status === 'voting' && isSelectedAction && '等待其他人選擇行動...'}
+          </p>
           <ul>
             {/* 新增選擇行動的下拉選單 */}
-            <li>
-              <p>選擇你的行動：</p>
-              <select value={selectedAction} onChange={(e) => setSelectedAction(e.target.value)}>
-                <option value="" disabled>--- 請選擇行動 ---</option>
-                {teamsData[selectedTeam]?.actions?.map((action, index) => (
-                  <option key={index} value={action}>{action}</option>
-                ))}
-              </select>
-              <button onClick={handleSubmitChoice} disabled={!selectedAction}>提交行動</button>
-            </li>
+            {gameState?.status === 'voting' && !isSelectedAction && (
+              <li>
+                <p>選擇你的行動：</p>
+                <select value={selectedAction} onChange={(e) => setSelectedAction(e.target.value)}>
+                  <option value="" disabled>--- 請選擇行動 ---</option>
+                  {teamsData[selectedTeam]?.actions?.map((action) => (
+                    <option key={action.id} value={action.id}>{action.text}</option>
+                  ))}
+                </select>
+                <button onClick={handleSubmitChoice} disabled={!selectedAction}>提交行動</button>
+              </li>
+            )}
           </ul>
         </div>
       )}
 
-      {isConfirmed &&  (
-          <div>
-            <button onClick={handleRefresh}>刷新頁面</button>
-          </div>
+      {isConfirmed && (gameState?.status === 'waiting-team' || isSelectedAction) && (
+        <div>
+          <button onClick={handleRefresh}>刷新頁面</button>
+        </div>
       )}
 
       {/* 開發用的按鈕，刪除所有 cookie */}
       <button onClick={handleDeleteCookies} style={{ marginTop: '20px', backgroundColor: 'red', color: 'white' }}>
         刪除所有 cookie
       </button>
-      <div>this is a test message.</div>
+      {/* <div>this is a test message.</div> */}
     </div>
   );
 }

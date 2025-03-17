@@ -54,7 +54,7 @@ function Dashboard() {
       <p>{storyData.text}</p>
 
       <div>
-        {gameState?.currentStep && gameState?.currentStep > 0 ? <h2>目前回合：{gameState.currentStep}</h2> : null}
+        {gameState?.status === 'voting' ? <h2>目前回合：{gameState.currentStep}</h2> : null}
         <h2>遊戲狀態：{gameState?.text}</h2>
       </div>
       
@@ -62,21 +62,41 @@ function Dashboard() {
       <h2>陣營狀態</h2>
       {teamsData && Object.keys(teamsData).length > 0 ? (
         <ul>
-          {gameState.currentStep == 0 ? 
+          {gameState?.status === 'waiting-team' &&
+          (
+            // 顯示各陣營的基本資訊
             Object.entries(teamsData).map(([teamId, teamInfo]) => (
-            <li key={teamId}>
-              <strong>{teamInfo.teamName}</strong> - 人口: {teamInfo.population}
-            </li>
-          )) : 
+              <li key={teamId}>
+                <strong>{teamInfo.teamName}</strong> - 
+                人口: {teamInfo.population}
+              </li>
+            ))
+          )}
+          {gameState?.status === 'voting' && (
+            // 顯示投票情況
             Object.entries(teamsData).map(([teamId, teamInfo]) => (
-            <li key={teamId}>
-              <strong>{teamInfo.teamName}</strong> - 人口: {teamInfo.population} - 經濟: {teamInfo.economy} - 科技: {teamInfo.technology} - 分數: {teamInfo.score}
-            </li>
-          ))
-          }
+              <li key={teamId}>
+                <li key={teamId}>
+                <strong>{teamInfo.teamName}</strong> - 
+                  人口: {teamInfo.population} - 
+                  經濟: {teamInfo.economy} - 
+                  科技: {teamInfo.technology} - 
+                  分數: {teamInfo.score}
+                </li>
+                <ul>
+                  {teamInfo.actions.map((action) => (
+                    <li key={action.id}>
+                      {action.text} - 目前票數: {action.count}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))
+          )}
+
         </ul>
       ) : (
-        <p>尚無陣營資料</p>
+        <p>無法取得陣營資料</p>
       )}
       
       <button onClick={handleNextStep}>下一步</button>
