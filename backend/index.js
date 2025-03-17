@@ -9,7 +9,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // 允許前端連線 (React 開發環境)
+    origin: "*", // 允許前端連線 (React 開發環境)
     methods: ["GET", "POST"]
   }
 });

@@ -136,6 +136,7 @@ function PlayerPage() {
       <button onClick={handleDeleteCookies} style={{ marginTop: '20px', backgroundColor: 'red', color: 'white' }}>
         刪除所有 cookie
       </button>
+      <div>this is a test message.</div>
     </div>
   );
 }
