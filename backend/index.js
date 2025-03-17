@@ -128,6 +128,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-server.listen(3001, () => {
-  console.log('Server running on http://localhost:3001');
+server.listen(port, () => {
+  console.log('Server running on http://localhost:' + port);
 });
