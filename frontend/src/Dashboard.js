@@ -33,8 +33,9 @@ function Dashboard() {
 
   // 「下一步」按鈕的事件處理
   const handleNextStep = () => {
-    if (gameState?.status === 'generating') {
+    if (gameState?.status === 'voting') {
       setIsGenerating(true);
+      console.log('Generating...');
     }
     fetch('/next-step', {
       method: 'POST',
@@ -44,8 +45,10 @@ function Dashboard() {
         // 這裡可自行決定要不要做任何 UI 呈現
         // 若後端執行成功，socket.io 也會自動推給前端最新的 gameState
         console.log('next-step API 回應：', data);
-        if (isGenerating === true) {
+        console.log('isGenerating:', isGenerating);
+        if (gameState?.status === 'generating') {
           setIsGenerating(false);
+          console.log('Generating done!');
         }
       })
       .catch((err) => {
@@ -59,6 +62,7 @@ function Dashboard() {
     })
       .then((res) => res.json())
       .then((data) => {
+        setIsGenerating(false);
         console.log('reset-data API 回應：', data);
       })
       .catch((err) => {
@@ -76,11 +80,16 @@ function Dashboard() {
 
       <div>
         {gameState?.status === 'voting' ? <h2>目前回合：{gameState.currentStep}</h2> : null}
-        <h2>遊戲狀態：{gameState?.text}</h2>
+        <h2>遊戲狀態：
+            {gameState?.status === 'waiting-team' && gameState?.text}
+            {gameState?.status === 'voting' && gameState?.text}
+            {gameState?.status === 'generating' && isGenerating && '等待世界的改變...'}
+            {gameState?.status === 'generating' && !isGenerating && '世界已經改變，即將開始下一輪投票'}
+        </h2>
       </div>
       
 
-      <h2>陣營狀態</h2>
+      
       {teamsData && Object.keys(teamsData).length > 0 ? (
         <ul>
           {gameState?.status === 'waiting-team' &&
@@ -107,7 +116,7 @@ function Dashboard() {
                 <ul>
                   {teamInfo.actions.map((action) => (
                     <li key={action.id}>
-                      {action.text} - 目前票數: {action.count}
+                      {action.title} - 目前票數: {action.count}
                     </li>
                   ))}
                 </ul>

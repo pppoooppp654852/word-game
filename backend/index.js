@@ -30,10 +30,12 @@ let gameStates = {
   voting: {
     status: 'voting',
     text: '請為你的陣營選擇行動',
+    currentStep: 0,
   },
   generating: {
     status: 'generating',
     text: '根據各陣營行動，生成新的世界描述',
+    currentStep: 0,
   }
 };
 
@@ -110,24 +112,30 @@ app.post('/submit-choice', (req, res) => {
 
 //  關鍵：下一步 (推進遊戲階段)
 app.post('/next-step', async (req, res) => {
-  currentGameState.currentStep += 1;
 
   if (currentGameState.status === 'waiting-team') { // 若目前為等待選擇陣營階段，則進入投票階段
+    console.log('進入投票階段...');
     currentGameState = gameStates['voting'];
+    currentGameState.currentStep += 1;
   }
   else if (currentGameState.status === 'voting') {   // 若目前為投票階段，則進入生成階段
-    currentGameState.status = gameStates['generating'].status;
-    currentGameState.text = gameStates['generating'].text;
+    currentGameState = gameStates['generating'];
     io.emit('gameStateUpdated', { currentGameState});
     
     // 2) 呼叫 LLM，依據各陣營多數投票行動來生成新的故事內容、更新陣營屬性
-    try {
-      await generateNextStoryAndUpdate(currentGameState, teamsData, storyData, gameStates, io);  
-      // generateNextStoryAndUpdate 裡會把 currentGameState, teamsData, storyData 更新
-      // 之後我們可選擇要不要馬上再切回 waiting-team 或 voting
-      // 這邊可依遊戲設計需求做
-    } catch (err) {
-      console.error("呼叫 LLM 失敗：", err);
+    while (true) {
+      try {
+        console.log('呼叫 LLM 生成新故事中...');
+        await generateNextStoryAndUpdate(currentGameState, teamsData, storyData, gameStates, io);  
+        // 生成成功後，更新遊戲狀態
+        currentGameState = gameStates['voting'];
+        currentGameState.currentStep += 1;
+        console.log('新故事生成成功！');
+        console.log('currentGameState:', currentGameState);
+        break;  // 生成成功，跳出迴圈
+      } catch (err) {
+        console.error("呼叫 LLM 失敗，重新嘗試中...", err);
+      }
     }
   }
   

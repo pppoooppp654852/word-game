@@ -50,6 +50,11 @@ function PlayerPage() {
         setTeamsData(data.teamsData);
         console.log('game-state:', data);
         console.log('teamsData:', data.teamsData);
+
+        if (data.currentGameState.status === 'generating') {
+          setSelectedAction('');
+          setIsSelectedAction(false);
+        }
       })
       .catch((err) => console.error('Error:', err));
   };
@@ -58,6 +63,8 @@ function PlayerPage() {
     Cookies.remove('selectedTeam');
     setSelectedTeam('');
     setIsConfirmed(false);
+    setSelectedAction('');
+    setIsSelectedAction(false);
     alert('所有 cookie 已刪除');
   };
 
@@ -111,26 +118,29 @@ function PlayerPage() {
             {gameState?.status === 'waiting-team' && gameState?.text}
             {gameState?.status === 'voting' && !isSelectedAction && gameState?.text}
             {gameState?.status === 'voting' && isSelectedAction && '等待其他人選擇行動...'}
+            {gameState?.status === 'generating' && '等待世界的改變...'}
           </p>
-          <ul>
             {/* 新增選擇行動的下拉選單 */}
             {gameState?.status === 'voting' && !isSelectedAction && (
-              <li>
+              <div>
                 <p>選擇你的行動：</p>
                 <select value={selectedAction} onChange={(e) => setSelectedAction(e.target.value)}>
                   <option value="" disabled>--- 請選擇行動 ---</option>
                   {teamsData[selectedTeam]?.actions?.map((action) => (
-                    <option key={action.id} value={action.id}>{action.text}</option>
+                    <>
+                      <option key={action.id} value={action.id}>{action.title}</option>
+                      
+                    </>
                   ))}
                 </select>
+                <p>行動描述：{teamsData[selectedTeam]?.actions[selectedAction]?.description}</p>
                 <button onClick={handleSubmitChoice} disabled={!selectedAction}>提交行動</button>
-              </li>
+              </div>
             )}
-          </ul>
         </div>
       )}
 
-      {isConfirmed && (gameState?.status === 'waiting-team' || isSelectedAction) && (
+      {isConfirmed && (gameState?.status === 'waiting-team' || gameState?.status === 'generating' || isSelectedAction) && (
         <div>
           <button onClick={handleRefresh}>刷新頁面</button>
         </div>

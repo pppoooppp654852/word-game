@@ -25,7 +25,7 @@ const teamsData = {
         "id": 0,
         "title": "紅石機械奇蹟",
         "description": "利用最先進的紅石科技，建造一座全自動化的『無限綠寶石農場』，讓村民交易達到史無前例的巔峰！",
-        "count": 0
+        "count": 1
       },
       {
         "id": 1,
@@ -66,7 +66,7 @@ const teamsData = {
         "id": 1,
         "title": "巨樹建築復興計劃",
         "description": "在世界各地種植巨型橡樹，建造宛如天空之城的森林要塞，震懾所有敵對勢力！",
-        "count": 0
+        "count": 1
       },
       {
         "id": 2,
@@ -95,7 +95,7 @@ const teamsData = {
         "id": 0,
         "title": "極寒戰士訓練",
         "description": "對戰士進行最嚴苛的冰原訓練，只有能在零下環境中挖掘下界合金的勇者才能晉升為精英戰士！",
-        "count": 0
+        "count": 1
       },
       {
         "id": 1,
