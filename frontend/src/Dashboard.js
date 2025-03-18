@@ -1,3 +1,4 @@
+// Dashboard.js
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 
@@ -9,13 +10,13 @@ function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    const socket = io('http://localhost:3001');
+    const socket = io('/');
     socket.on('connect', () => {
       console.log('Dashboard connected to server via Socket.IO');
     });
     socket.on('gameStateUpdated', (data) => {
       console.log('Received gameStateUpdated', data);
-      if (data.currentGameState != undefined) {
+      if (data.currentGameState !== undefined) {
         setGameState(data.currentGameState);
       }
       if (data.teamsData !== undefined) {
@@ -35,7 +36,7 @@ function Dashboard() {
     if (gameState?.status === 'generating') {
       setIsGenerating(true);
     }
-    fetch('http://localhost:3001/next-step', {
+    fetch('/next-step', {
       method: 'POST',
     })
       .then((res) => res.json())
@@ -49,6 +50,19 @@ function Dashboard() {
       })
       .catch((err) => {
         console.error('Error calling /next-step:', err);
+      });
+  };
+
+  const handleResetData = () => {
+    fetch('/reset-data', {
+      method: 'POST',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('reset-data API 回應：', data);
+      })
+      .catch((err) => {
+        console.error('Error calling /reset-data:', err);
       });
   };
 
@@ -128,6 +142,7 @@ function Dashboard() {
       )}
       
       <button onClick={handleNextStep}>下一步</button>
+      <button onClick={handleResetData}>重置狀態</button>
     </div>
   );
 }

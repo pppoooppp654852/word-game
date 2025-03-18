@@ -1,50 +1,50 @@
-name: Build & Deploy to K8s
+# name: Build & Deploy to K8s
 
-on:
-  push:
-    branches:
-      - main  # 只有 push 到 main 才會觸發部署
+# on:
+#   push:
+#     branches:
+#       - main  # 只有 push 到 main 才會觸發部署
 
-jobs:
-  build_and_push:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+# jobs:
+#   build_and_push:
+#     name: Build and Push Docker Image
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
 
-      - name: Login to Harbor Registry
-        run: |
-          echo "${{ secrets.HARBOR_PASSWORD }}" | docker login ${{ secrets.HARBOR_REGISTRY }} -u ${{ secrets.HARBOR_USERNAME }} --password-stdin
+#       - name: Login to Harbor Registry
+#         run: |
+#           echo "${{ secrets.HARBOR_PASSWORD }}" | docker login ${{ secrets.HARBOR_REGISTRY }} -u ${{ secrets.HARBOR_USERNAME }} --password-stdin
 
-      - name: Build Docker Image
-        run: |
-          docker build -t word-game:latest .
+#       - name: Build Docker Image
+#         run: |
+#           docker build -t word-game:latest .
       
-      - name: Tag Docker Image
-        run: |
-          docker tag word-game:latest ${{ secrets.HARBOR_REGISTRY }}/word-game:latest
+#       - name: Tag Docker Image
+#         run: |
+#           docker tag word-game:latest ${{ secrets.HARBOR_REGISTRY }}/word-game:latest
 
-      - name: Push Docker Image to Harbor
-        run: |
-          docker push ${{ secrets.HARBOR_REGISTRY }}/word-game:latest
+#       - name: Push Docker Image to Harbor
+#         run: |
+#           docker push ${{ secrets.HARBOR_REGISTRY }}/word-game:latest
 
-  deploy_to_k8s:
-    name: Deploy to Kubernetes
-    needs: build_and_push  # 只有當上一步成功時才執行
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+#   deploy_to_k8s:
+#     name: Deploy to Kubernetes
+#     needs: build_and_push  # 只有當上一步成功時才執行
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
 
-      - name: Setup Kubectl
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-          export KUBECONFIG=$HOME/.kube/config
+#       - name: Setup Kubectl
+#         run: |
+#           mkdir -p $HOME/.kube
+#           echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+#           chmod 600 $HOME/.kube/config
+#           export KUBECONFIG=$HOME/.kube/config
 
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl set image deployment/word-game word-game=${{ secrets.HARBOR_REGISTRY }}/word-game:latest -n v1report-test-webgame
-          kubectl rollout status deployment/word-game -n v1report-test-webgame
+#       - name: Deploy to Kubernetes
+#         run: |
+#           kubectl set image deployment/word-game word-game=${{ secrets.HARBOR_REGISTRY }}/word-game:latest -n v1report-test-webgame
+#           kubectl rollout status deployment/word-game -n v1report-test-webgame

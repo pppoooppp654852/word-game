@@ -1,3 +1,4 @@
+// PlayerPage.js
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 
@@ -12,7 +13,7 @@ function PlayerPage() {
 
   useEffect(() => {
     // 取得隊伍列表
-    fetch('http://localhost:3001/teams')
+    fetch('/teams')
       .then((res) => res.json())
       .then((data) => setTeams(data.teams))
       .catch((err) => console.error('Error fetching teams:', err));
@@ -24,7 +25,7 @@ function PlayerPage() {
   }, [isConfirmed]);
 
   const handleConfirmTeam = () => {
-    fetch('http://localhost:3001/choose-team', {
+    fetch('/choose-team', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ teamId: selectedTeam }),
@@ -42,7 +43,7 @@ function PlayerPage() {
   };
 
   const handleRefresh = () => {
-    fetch('http://localhost:3001/game-state')
+    fetch('/game-state')
       .then((res) => res.json())
       .then((data) => {
         setGameState(data.currentGameState);
@@ -61,7 +62,7 @@ function PlayerPage() {
   };
 
   const handleSubmitChoice = () => {
-    fetch('http://localhost:3001/submit-choice', {
+    fetch('/submit-choice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ teamId: selectedTeam, choice: selectedAction }),
