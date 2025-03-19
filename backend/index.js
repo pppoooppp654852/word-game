@@ -39,8 +39,8 @@ let gameStates = {
   }
 };
 
-let teamsData = initialTeamsData;
-let storyData = initialStoryData;
+let teamsData = JSON.parse(JSON.stringify(initialTeamsData));
+let storyData = JSON.parse(JSON.stringify(initialStoryData));
 let currentGameState = JSON.parse(JSON.stringify(gameStates['waitingTeam']));
 
 // 啟用 CORS & 解析 JSON body
