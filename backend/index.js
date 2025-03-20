@@ -8,6 +8,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios'); 
 const { generateNextStoryAndUpdate } = require('./storyGenerator');
+const gameStateConfigs = require('./data/gameStateConfigs.js');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,27 +22,14 @@ const port = process.env.PORT || 3001;
 
 const initialTeamsData = JSON.parse(JSON.stringify(require('./data/teamData.js')));
 const initialStoryData = JSON.parse(JSON.stringify(require('./data/story.js')));
-let gameStates = {
-  waitingTeam: {
-    status: 'waiting-team',
-    text: '等待玩家選擇陣營',
-    currentStep: 0,
-  },
-  voting: {
-    status: 'voting',
-    text: '請為你的陣營選擇行動',
-    currentStep: 0,
-  },
-  generating: {
-    status: 'generating',
-    text: '根據各陣營行動，生成新的世界描述',
-    currentStep: 0,
-  }
-};
 
 let teamsData = JSON.parse(JSON.stringify(initialTeamsData));
 let storyData = JSON.parse(JSON.stringify(initialStoryData));
-let currentGameState = JSON.parse(JSON.stringify(gameStates['waitingTeam']));
+let currentGameState = {
+  status: 'waiting',
+  text: gameStateConfigs['waiting'].text,
+  currentStep: 1
+};
 
 // 啟用 CORS & 解析 JSON body
 app.use(cors({ origin: '*' }));
@@ -113,25 +101,26 @@ app.post('/submit-choice', (req, res) => {
 //  關鍵：下一步 (推進遊戲階段)
 app.post('/next-step', async (req, res) => {
 
-  if (currentGameState.status === 'waiting-team') { // 若目前為等待選擇陣營階段，則進入投票階段
-    console.log('進入投票階段...');
-    currentGameState = gameStates['voting'];
-    currentGameState.currentStep += 1;
+  if (currentGameState.status === 'waiting') { // 若目前為等待選擇陣營階段，則進入投票階段
+    // console.log('進入投票階段...');
+    currentGameState.status = 'voting';
+    currentGameState.text = gameStateConfigs['voting'].text;
   }
   else if (currentGameState.status === 'voting') {   // 若目前為投票階段，則進入生成階段
-    currentGameState = gameStates['generating'];
+    currentGameState.status = 'generating';
+    currentGameState.text = gameStateConfigs['generating'].text;
     io.emit('gameStateUpdated', { currentGameState});
     
     // 2) 呼叫 LLM，依據各陣營多數投票行動來生成新的故事內容、更新陣營屬性
     while (true) {
       try {
         console.log('呼叫 LLM 生成新故事中...');
-        await generateNextStoryAndUpdate(currentGameState, teamsData, storyData, gameStates, io);  
+        await generateNextStoryAndUpdate(teamsData, storyData, io);
         // 生成成功後，更新遊戲狀態
-        currentGameState = gameStates['voting'];
+        currentGameState.status = 'voting';
+        currentGameState.text = gameStateConfigs['voting'].text;
         currentGameState.currentStep += 1;
         console.log('新故事生成成功！');
-        console.log('currentGameState:', currentGameState);
         break;  // 生成成功，跳出迴圈
       } catch (err) {
         console.error("呼叫 LLM 失敗，重新嘗試中...", err);
@@ -148,7 +137,11 @@ app.post('/next-step', async (req, res) => {
 app.post('/reset-data', (req, res) => {
   teamsData = JSON.parse(JSON.stringify(initialTeamsData));
   storyData = JSON.parse(JSON.stringify(initialStoryData));
-  currentGameState = JSON.parse(JSON.stringify(gameStates['waitingTeam']));
+  currentGameState = {
+    status: 'waiting',
+    text: gameStateConfigs['waiting'].text,
+    currentStep: 1
+  };
 
   console.log(teamsData)
 

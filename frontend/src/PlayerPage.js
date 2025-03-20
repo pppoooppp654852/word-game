@@ -6,7 +6,7 @@ function PlayerPage() {
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(Cookies.get('selectedTeam') || '');
   const [isConfirmed, setIsConfirmed] = useState(!!Cookies.get('selectedTeam')); // 判斷是否已選擇隊伍
-  const [gameState, setGameState] = useState(null);
+  const [gameState, setGameState] = useState({});
   const [teamsData, setTeamsData] = useState({});
   const [selectedAction, setSelectedAction] = useState('');
   const [isSelectedAction, setIsSelectedAction] = useState(false);
@@ -46,10 +46,17 @@ function PlayerPage() {
     fetch('/game-state')
       .then((res) => res.json())
       .then((data) => {
+        console.log('currentStep:', gameState?.currentStep);
+        console.log('data.currentGameState.currentStep:', data.currentGameState.currentStep);
+        if (gameState?.currentStep < data.currentGameState.currentStep) {
+          setSelectedAction('');
+          setIsSelectedAction(false);
+        }
+        
         setGameState(data.currentGameState);
         setTeamsData(data.teamsData);
-        console.log('game-state:', data);
-        console.log('teamsData:', data.teamsData);
+        // console.log('game-state:', data.currentGameState);
+        // console.log('teamsData:', data.teamsData);
 
         if (data.currentGameState.status === 'generating') {
           setSelectedAction('');
@@ -89,7 +96,7 @@ function PlayerPage() {
 
   return (
     <div style={{ margin: '20px' }}>
-      <h1>小遊戲參與</h1>
+      <h1>方塊文明</h1>
 
       {/* 只有在還沒選擇隊伍時才顯示選單 */}
       {!isConfirmed && (
@@ -115,7 +122,7 @@ function PlayerPage() {
         <div>
           <p> 你的隊伍是: {selectedTeamInfo?.name || '無資料'}</p>
           <p>遊戲狀態：
-            {gameState?.status === 'waiting-team' && gameState?.text}
+            {gameState?.status === 'waiting' && gameState?.text}
             {gameState?.status === 'voting' && !isSelectedAction && gameState?.text}
             {gameState?.status === 'voting' && isSelectedAction && '等待其他人選擇行動...'}
             {gameState?.status === 'generating' && '等待世界的改變...'}
@@ -129,7 +136,6 @@ function PlayerPage() {
                   {teamsData[selectedTeam]?.actions?.map((action) => (
                     <>
                       <option key={action.id} value={action.id}>{action.title}</option>
-                      
                     </>
                   ))}
                 </select>
@@ -140,7 +146,7 @@ function PlayerPage() {
         </div>
       )}
 
-      {isConfirmed && (gameState?.status === 'waiting-team' || gameState?.status === 'generating' || isSelectedAction) && (
+      {isConfirmed && (gameState?.status === 'waiting' || gameState?.status === 'generating' || isSelectedAction) && (
         <div>
           <button onClick={handleRefresh}>刷新頁面</button>
         </div>

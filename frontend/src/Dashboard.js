@@ -15,7 +15,7 @@ function Dashboard() {
       console.log('Dashboard connected to server via Socket.IO');
     });
     socket.on('gameStateUpdated', (data) => {
-      console.log('Received gameStateUpdated', data);
+      // console.log('Received gameStateUpdated');
       if (data.currentGameState !== undefined) {
         setGameState(data.currentGameState);
       }
@@ -76,12 +76,19 @@ function Dashboard() {
       <h1>Minecraft峽谷</h1>
 
       <h2>故事進展</h2>
-      <p>{storyData.text}</p>
+      <p>
+        {storyData.text.split("\n").map((line, index) => (
+          <React.Fragment key={index}>
+            {line}
+            <br />
+          </React.Fragment>
+        ))}
+      </p>
 
       <div>
         {gameState?.status === 'voting' ? <h2>目前回合：{gameState.currentStep}</h2> : null}
         <h2>遊戲狀態：
-            {gameState?.status === 'waiting-team' && gameState?.text}
+            {gameState?.status === 'waiting' && gameState?.text}
             {gameState?.status === 'voting' && gameState?.text}
             {gameState?.status === 'generating' && isGenerating && '等待世界的改變...'}
             {gameState?.status === 'generating' && !isGenerating && '世界已經改變，即將開始下一輪投票'}
@@ -92,7 +99,7 @@ function Dashboard() {
       
       {teamsData && Object.keys(teamsData).length > 0 ? (
         <ul>
-          {gameState?.status === 'waiting-team' &&
+          {gameState?.status === 'waiting' &&
           (
             // 顯示各陣營的基本資訊
             Object.entries(teamsData).map(([teamId, teamInfo]) => (

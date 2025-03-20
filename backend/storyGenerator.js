@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 
-async function generateNextStoryAndUpdate(currentGameState, teamsData, storyData, gameStates, io) {
+async function generateNextStoryAndUpdate(teamsData, storyData, io) {
   // 1. 先整理出各陣營「多數行動」或所有行動投票結果
   const majorityChoices = {};
   for (let teamId in teamsData) {
@@ -55,80 +55,100 @@ async function generateNextStoryAndUpdate(currentGameState, teamsData, storyData
     role: 'user',
     content: `
     世界觀設定:
-    在這個充滿 Minecraft 風格的世界「方塊大陸」中，三大陣營在政治、經濟與文化上激烈競爭。他們的行動不再是獨立的發展，而是彼此影響，並可能導致出乎意料的後果，甚至讓整個世界發生翻天覆地的變化。
+    在這個Minecraft風格的世界「方塊大陸」，沙漠帝國、森林王國、冰原聯邦三大陣營正進行激烈競爭。他們的行動必須相互影響，並帶來意外後果與戲劇化的環境變化。
 
-    沙漠帝國（燒熾之邦）🔥
-    這是一個以「紅石科技」為核心的強權國度，他們利用紅石機關與自動化機械來支配經濟與戰爭。
-    特色： 精通 TNT 砲塔、岩漿陷阱、自動農場、超級交易站。
-    目標： 透過「無限綠寶石交易」與「紅石軍械」統治方塊大陸！
+    沙漠帝國
+    這個國度位於炎熱廣大的沙漠，以「紅石科技」為立國之本。他們的村民精通紅石電路，打造了雄偉的金字塔作為帝國的核心。帝國利用先進的自動化機械與紅石機關來統治經濟與戰場，意圖以科技力量征服整個方塊大陸。
+    特色： 巨型紅石金字塔、TNT砲塔、岩漿陷阱、自動化農業與超級交易站。
 
-    森林王國（綠蔭之庭）🌲
-    這是一個擅長「村民交易、自然建築、隱秘戰術」的陣營，他們建立無數村莊來擴大經濟影響力。
-    特色： 精通 村民交易黑科技、巨樹建築、動物軍團。
-    目標： 透過「交易壟斷」與「隱匿式戰術」掌控大陸的資源流動！
+    森林王國
+    這個神秘的國家位於茂密的叢林中，信奉大自然的力量。他們的薩滿祭司掌握著神奇的附魔技術，利用這種力量與大自然共存，建立出無數生態和諧的村落。森林王國透過龐大的村民交易網絡擴大影響力，追求以和平、隱秘的方式稱霸方塊大陸。
+    特色： 薩滿魔法與附魔武器、神秘的村民交易黑科技、巨型叢林樹屋、動物與植物軍團。
 
-    冰原聯邦（霜寒之盟）❄️
-    這是一個來自極地的戰鬥民族，他們擁有最強的戰士與極端生存技術，並以掠奪、極寒陷阱和強大裝備制霸大陸。
-    特色： 精通 下界合金裝備、粉雪陷阱、極端生存技巧。
-    目標： 透過「武力鎮壓」與「資源獨佔」確保自己不被任何人挑戰！
+    冰原聯邦
+    位於方塊大陸北方寒冷地帶的強大聯邦，以豐富的礦藏資源與卓越的軍事技術立足。他們的人民擅長在極端環境中生存與作戰，並以強大的軍隊、堅固的堡壘以及尖端裝備來抵禦或入侵其他勢力。冰原聯邦認為只有絕對的軍事力量才能掌控方塊大陸。
+    特色： 豐富的鑽石與下界合金裝備、粉雪與寒冰陷阱、強大的極地戰士、極端環境生存技巧。
 
     數值計算規則
     economy（經濟指數）： 測量該陣營的交易能力、物資儲備與礦產開採效率。
     technology（科技指數）： 測量該陣營的紅石機關、附魔裝備與戰術創新程度。
     score（總分）： 由 economy + technology 綜合計算，並考慮該陣營的優勢與發展狀況。
 
-    故事情節演進
-    你需要將三大陣營的行動彼此影響，避免獨立發展：
-    直接影響：例如森林王國的交易壟斷導致沙漠帝國的綠寶石價格崩潰。
-    意想不到的後果：例如冰原聯邦啟動「冰封大陸計畫」，但沙漠帝國卻用紅石科技開發「抗凍機械」，導致整片冰原開始融化！
-    環境變化：例如「苦力怕襲擊計畫」導致村民開始進行「要塞化」，每個村莊都變成堡壘，影響所有陣營的經濟。
+    故事生成規則：
+    - 描述當前發生的事件與環境變化，並具體說明對各個陣營 economy 與 technology 的影響，且解釋原因。
+    - 陣營行動必須明確影響其他陣營（例如森林王國的交易導致沙漠帝國的綠寶石價值崩盤）。
+    - 每次事件須有至少一個意外且戲劇化的後果（環境、經濟或科技突變）。
+    - 故事充滿戲劇性與荒誕情節，增添趣味性與誇張效果（類似八點檔風格）。
 
-    生成規則
-    請根據目前的故事劇情與各個陣營的行動：
-    確保三大陣營的行動彼此影響，至少影響到另一個陣營。
-    產生意想不到的後果，這些後果可以是環境變化、經濟崩潰、科技突變、甚至是戰爭升級。
-    讓故事更加戲劇化、荒誕離奇，讓方塊大陸的競爭變得史詩級精彩！
+    行動設計規範：
+    每個陣營提供4個行動：
+    - 行動須基於Minecraft遊戲內機制（紅石科技、村民交易、附魔、PVP、陷阱等）。
+    - 名稱與描述必須誇張、有趣，符合各陣營特色且富有創意。
+    - 行動必須明顯影響其他陣營或整體環境。
+    - 行動須依據當前故事情節設計，禁止脫離劇情、無關的選項。
+    - 不能產生過去故事中已經發生過的行動，需保持故事連貫性。
 
-    示例
-    沙漠帝國發動「紅石機械奇蹟」 → 自動化農場產出過量綠寶石，導致市場崩潰，森林王國的村民交易價值驟降！
-    森林王國執行「地圖誤導戰術」 → 他們偽造地圖，讓冰原聯邦的礦工去挖掘一座根本不存在的「終界要塞」，導致戰士們迷失在冰原深處！
-    冰原聯邦施展「冰封大陸計畫」 → 導致水源凍結，但沙漠帝國的岩漿湖意外成為新的「魚類棲息地」，開始發展岩漿魚交易市場，反而讓他們更富有！
+    行動範例（可參考歷史事件與Minecraft常見玩法）：
+    沙漠帝國：
+      - 「紅石工業革命」建立全自動生產線，大量製造綠寶石造成市場崩盤。
+      - 「末日裝置計畫」以紅石科技打造超級TNT砲塔，威脅其他陣營交出資源。
+      - 「沙漠鐵路系統」高速鐵路連結各地，引發綠寶石通貨膨脹危機。
+      - 「綠寶石爭奪戰」模仿美蘇太空競賽，大量建設綠寶石紀念碑，刺激科技競爭。
+      - 「巨型TNT火砲」：模仿二戰巨砲科技，建設可遠程轟炸敵方陣營的超大型TNT火砲。
+      - 「紅石間諜衛星」：以紅石科技打造高空偵察飛船，掌握敵軍部署動態，科技優勢大增。
+    森林王國：
+      - 「黑色星期五大拍賣」極限降價破壞沙漠帝國的綠寶石經濟。
+      - 「特洛伊苦力怕」透過隱匿的方式潛入敵方村莊造成重大損害。
+      - 「迷宮要塞戰術」建設大量迷宮與陷阱防禦外敵入侵，導致敵軍大量損耗。
+      - 「森林地下鐵道」秘密建立地下隧道系統，對敵方資源進行隱密的掠奪。
+      - 「亞馬遜雨林戰術」：建立茂密的迷宮森林和陷阱防禦，仿越戰叢林游擊戰消耗敵軍。
+    冰原聯邦：
+      - 「極地冬季戰役」以極端氣候戰術，凍結敵方生產系統。
+      - 「維京掠奪行動」快速入侵掠奪敵方資源並破壞其經濟。
+      - 「冰河世紀計畫」人為製造冰川改變氣候，意外讓沙漠帝國岩漿湖變成岩漿魚市場。
+      - 「諾曼底登陸作戰」以冰原聯邦戰士組成登陸部隊，快速攻擊敵方沿海城市。
+      - 「巴巴羅薩突襲」：突襲敵方科技中心掠奪技術資源，使敵方科技停滯。
 
-    行動設計（actions）
-    每個陣營可選擇 4 種獨特行動，這些行動必須：
-    符合 Minecraft 世界觀（使用遊戲內機制，如紅石、交易、PVP、附魔等）。
-    誇張、有趣、帶有戲劇性（例如「狼群戰術」「召喚苦力怕軍團」「紅石自動挖礦機」）。
-    符合陣營風格（如沙漠帝國應更科技導向、森林王國應專注交易與建築、冰原聯邦應偏向戰爭與資源壟斷）。
-    舉例
-    🔥 沙漠帝國
-    「紅石機械奇蹟」 - 建立超級自動農場，每分鐘產出 1000 顆綠寶石，顛覆市場！
-    「苦力怕襲擊計畫」 - 訓練一批帶有隱身藥水的苦力怕，潛入敵國首都並引爆！
-    🌲 森林王國
-    「無限交易帝國」 - 訓練村民進行無限降價，讓所有裝備幾乎免費，讓敵人無法競爭！
-    「地圖誤導戰術」 - 透過繪製假地圖，欺騙敵人開採錯誤區域的礦產！
-    ❄️ 冰原聯邦
-    「冰封大陸計畫」 - 對敵方施放超級寒霜詛咒，讓他們的水源全部凍結，無法耕種！
-    「終界龍獵殺行動」 - 發起對終界龍的屠殺計畫，獨佔所有龍息與紫色寶石，確保科技領先！
+    【故事產生格式】（請嚴格遵守以下順序與格式）
+    <第一段落：各陣營本回合行動概要>
+    簡短明確地逐條列出每個陣營此次所採取的行動，包含行動標題與簡要描述。
+    <第二段落：故事發展、陣營互動與環境變化，字數必須超過200字>
+    具體描述以上行動導致的事件、陣營互動、意外後果及環境變化，務必詳細說明這些事件對各陣營的經濟（economy）與科技（technology）數值造成的影響，並明確解釋原因。
 
-    【世界目前的故事情節】
+    範例：
+    沙漠帝國：「沙漠鐵路系統」—— 興建連結大陸的高速鐵路，迅速擴張綠寶石交易網。
+    森林王國：「鐵軌掠奪者」—— 偷竊並破壞沙漠帝國新興鐵路系統，干擾其經濟擴張。
+    冰原聯邦：「投送TNT礦車」—— 以高速礦車運輸TNT破壞敵方交通網路，癱瘓敵方物流。
+    沙漠帝國的「沙漠鐵路系統」大獲成功，綠寶石大量流通，各地經濟蓬勃發展，經濟大幅提升。但森林王國的「鐵軌掠奪者」行動有效阻礙了部分路線，讓沙漠帝國須花費額外資源修復，使經濟增長受限。冰原聯邦「投送TNT礦車」意外引爆了森林王國藏於地下的交易隧道系統，導致森林王國地下交易體系瓦解，經濟數值急速下降。更令人意外的是，TNT引爆後發現地下藏有古代遺跡，開啟了新一輪技術爭奪戰，冰原聯邦因此獲得了大量罕見附魔書籍，科技實力暴漲！
+
+    【方塊世界歷史的故事情節】
+    ${storyData.history}
+
+    【方塊世界目前的故事情節】
     ${storyData.text}
 
-    【各陣營此次多數決行動】
+    【各陣營當前狀況】
+    ${Object.values(teamsData).map(m => `- ${m.teamName}: Economy=${m.economy}, Technology=${m.technology}, Score=${m.score}, Population=${m.population}`).join('\n')}
+    
+    【各陣營此次採取的行動】
     ${Object.values(majorityChoices).map(m => `- ${m.teamName}: ${m.chosenActionTitle} - ${m.chosenActionDescription}`).join('\n')}
-
-    請根據這些示例，創造三大陣營在方塊大陸的競爭與變化，並讓故事更加混亂、戲劇化、充滿出乎意料的發展甚至是八點檔的效果！
-    生成的JSON確保所有內容符合上述要求，並讓故事更加戲劇化、荒誕離奇，讓三大陣營的競爭變得史詩級精彩！
+    
+    請依據上述規則與範例，創造出連貫、富有邏輯且戲劇化的故事發展與行動，提升三大陣營間的互動性與趣味性，並以符合上述JSON結構輸出。
     `
   };  
 
   const body = {
-    model: "gpt-4o",
+    model: "o1",
     messages: [systemMessage, userMessage],
   };
+  console.log("呼叫LLM的body:", JSON.stringify(body, null, 2));
 
   const apiKey = process.env.OPENAI_API_KEY;
 
   try {
+    // 紀錄 API 呼叫開始時間
+    const startTime = Date.now();
+
     const response = await axios.post(
       "https://api.rdsec.trendmicro.com/prod/aiendpoint/v1/chat/completions",
       body,
@@ -139,6 +159,11 @@ async function generateNextStoryAndUpdate(currentGameState, teamsData, storyData
         }
       }
     );
+
+    // 紀錄 API 呼叫結束時間，並計算所花費的時間
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log(`呼叫 LLM API 花費的時間: ${elapsedTime / 1000.0} 秒`);
 
     // 解析 LLM 回覆
     const assistantMessage = response.data.choices[0].message.content;
@@ -158,15 +183,17 @@ async function generateNextStoryAndUpdate(currentGameState, teamsData, storyData
       throw new Error("LLM 回傳非 JSON 格式，或 JSON 無法解析。");
     }
 
+    // 將目前的故事放到history中
+    storyData.history += "\n" + storyData.text;
     // 更新 storyData 和 teamsData
-    storyData.text = newData.story || storyData.text;
+    storyData.text = newData.story || "故事尚未生成。";
 
     for (let teamId in newData.teams) {
       if (!teamsData[teamId]) continue;
-
-      teamsData[teamId].economy = newData.teams[teamId].economy;
-      teamsData[teamId].technology = newData.teams[teamId].technology;
-      teamsData[teamId].score = newData.teams[teamId].score;
+      factor = 1.0 + Math.random() * 0.2;
+      teamsData[teamId].economy = Math.floor(newData.teams[teamId].economy * factor);
+      teamsData[teamId].technology = Math.floor(newData.teams[teamId].technology * factor);
+      teamsData[teamId].score = Math.floor(newData.teams[teamId].score * factor);
 
       teamsData[teamId].actions = newData.teams[teamId].actions;
       for (let i = 0; i < teamsData[teamId].actions.length; i++) {
@@ -177,7 +204,7 @@ async function generateNextStoryAndUpdate(currentGameState, teamsData, storyData
     console.log("已更新 storyData & teamsData");
 
     // 更新遊戲狀態並通知前端
-    io.emit('gameStateUpdated', { currentGameState, teamsData, storyData });
+    io.emit('gameStateUpdated', { teamsData, storyData });
 
   } catch (err) {
     console.error("呼叫 LLM 失敗：", err);
