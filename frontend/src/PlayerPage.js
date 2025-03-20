@@ -9,7 +9,7 @@ function PlayerPage() {
   const [gameState, setGameState] = useState({});
   const [teamsData, setTeamsData] = useState({});
   const [selectedAction, setSelectedAction] = useState('');
-  const [isSelectedAction, setIsSelectedAction] = useState(false);
+  const [isSelectedAction, setIsSelectedAction] = useState(Cookies.get('actionSubmitted') === 'true');
 
   useEffect(() => {
     // 取得隊伍列表
@@ -46,12 +46,20 @@ function PlayerPage() {
     fetch('/game-state')
       .then((res) => res.json())
       .then((data) => {
-        console.log('currentStep:', gameState?.currentStep);
-        console.log('data.currentGameState.currentStep:', data.currentGameState.currentStep);
-        if (gameState?.currentStep < data.currentGameState.currentStep) {
+        // 從 cookie 讀取之前的 currentStep，預設為 0
+        const previousStep = Number(Cookies.get('currentStep') || 1);
+        const newStep = data.currentGameState.currentStep;
+
+        console.log('previousStep:', previousStep);
+        console.log('newStep', newStep);
+
+        if (previousStep < newStep) {
           setSelectedAction('');
           setIsSelectedAction(false);
+          Cookies.remove('actionSubmitted');
         }
+
+        Cookies.set('currentStep', newStep, { expires: 1 });
         
         setGameState(data.currentGameState);
         setTeamsData(data.teamsData);
@@ -68,6 +76,7 @@ function PlayerPage() {
 
   const handleDeleteCookies = () => {
     Cookies.remove('selectedTeam');
+    Cookies.remove('actionSubmitted');
     setSelectedTeam('');
     setIsConfirmed(false);
     setSelectedAction('');
@@ -85,6 +94,7 @@ function PlayerPage() {
       .then((result) => {
         if (result.status === 'OK') {
           alert('行動提交成功');
+          Cookies.set('actionSubmitted', 'true', { expires: 1 });
           setIsSelectedAction(true);
         } else {
           alert('行動提交失敗');
