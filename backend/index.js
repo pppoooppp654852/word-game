@@ -115,7 +115,7 @@ app.post('/next-step', async (req, res) => {
     while (true) {
       try {
         console.log('呼叫 LLM 生成新故事中...');
-        await generateNextStoryAndUpdate(teamsData, storyData, io);
+        await generateNextStoryAndUpdate(teamsData, storyData);
         // 生成成功後，更新遊戲狀態
         currentGameState.status = 'voting';
         currentGameState.text = gameStateConfigs['voting'].text;

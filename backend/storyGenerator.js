@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 
-async function generateNextStoryAndUpdate(teamsData, storyData, io) {
+async function generateNextStoryAndUpdate(teamsData, storyData) {
   // 1. 先整理出各陣營「多數行動」或所有行動投票結果
   const majorityChoices = {};
   for (let teamId in teamsData) {
@@ -200,12 +200,6 @@ async function generateNextStoryAndUpdate(teamsData, storyData, io) {
         teamsData[teamId].actions[i].count = 0;
       }
     }
-
-    console.log("已更新 storyData & teamsData");
-
-    // 更新遊戲狀態並通知前端
-    io.emit('gameStateUpdated', { teamsData, storyData });
-
   } catch (err) {
     console.error("呼叫 LLM 失敗：", err);
     throw new Error("無法與 LLM 伺服器通訊。");
