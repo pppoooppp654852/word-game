@@ -7,7 +7,7 @@ const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios'); 
-const { generateNextStoryAndUpdate } = require('./storyGenerator');
+const { generateStory } = require('./storyGenerator');
 const gameStateConfigs = require('./data/gameStateConfigs.js');
 
 const app = express();
@@ -115,7 +115,7 @@ app.post('/next-step', async (req, res) => {
     while (true) {
       try {
         console.log('呼叫 LLM 生成新故事中...');
-        await generateNextStoryAndUpdate(teamsData, storyData);
+        await generateStory(teamsData, storyData);
         // 生成成功後，更新遊戲狀態
         currentGameState.status = 'voting';
         currentGameState.text = gameStateConfigs['voting'].text;

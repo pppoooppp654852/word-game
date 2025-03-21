@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 
-async function generateNextStoryAndUpdate(teamsData, storyData) {
+async function generateStory(teamsData, storyData) {
   // 1. 先整理出各陣營「多數行動」或所有行動投票結果
   const majorityChoices = {};
   for (let teamId in teamsData) {
@@ -207,4 +207,4 @@ async function generateNextStoryAndUpdate(teamsData, storyData) {
 }
 
 // 匯出 function
-module.exports = { generateNextStoryAndUpdate };
+module.exports = { generateStory };
