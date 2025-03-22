@@ -1,11 +1,12 @@
 // PlayerPage.js
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
+import { Container, Box, Paper, Typography, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 function PlayerPage() {
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(Cookies.get('selectedTeam') || '');
-  const [isConfirmed, setIsConfirmed] = useState(!!Cookies.get('selectedTeam')); // 判斷是否已選擇隊伍
+  const [isConfirmed, setIsConfirmed] = useState(!!Cookies.get('selectedTeam'));
   const [gameState, setGameState] = useState({});
   const [teamsData, setTeamsData] = useState({});
   const [selectedAction, setSelectedAction] = useState('');
@@ -18,7 +19,6 @@ function PlayerPage() {
       .then((data) => setTeams(data.teams))
       .catch((err) => console.error('Error fetching teams:', err));
 
-    // 若已選擇隊伍，則直接更新遊戲狀態
     if (isConfirmed) {
       handleRefresh();
     }
@@ -33,7 +33,7 @@ function PlayerPage() {
       .then((res) => res.json())
       .then((result) => {
         if (result.status === 'OK') {
-          Cookies.set('selectedTeam', selectedTeam, { expires: 1 }); // 設置 cookie，保存 1 天
+          Cookies.set('selectedTeam', selectedTeam, { expires: 1 });
           setIsConfirmed(true);
         } else {
           alert('後端回覆失敗');
@@ -46,12 +46,8 @@ function PlayerPage() {
     fetch('/game-state')
       .then((res) => res.json())
       .then((data) => {
-        // 從 cookie 讀取之前的 currentStep，預設為 0
         const previousStep = Number(Cookies.get('currentStep') || 1);
         const newStep = data.currentGameState.currentStep;
-
-        console.log('previousStep:', previousStep);
-        console.log('newStep', newStep);
 
         if (previousStep < newStep) {
           setSelectedAction('');
@@ -60,11 +56,8 @@ function PlayerPage() {
         }
 
         Cookies.set('currentStep', newStep, { expires: 1 });
-        
         setGameState(data.currentGameState);
         setTeamsData(data.teamsData);
-        // console.log('game-state:', data.currentGameState);
-        // console.log('teamsData:', data.teamsData);
 
         if (data.currentGameState.status === 'generating') {
           setSelectedAction('');
@@ -102,72 +95,113 @@ function PlayerPage() {
       })
       .catch((err) => console.error('Error:', err));
   };
+
   const selectedTeamInfo = teams.find(team => team.id === selectedTeam);
 
   return (
-    <div style={{ margin: '20px' }}>
-      <h1>方塊文明</h1>
+    <Container maxWidth="sm">
+      <Box sx={{ marginTop: 4, padding: 2 }}>
+        <Paper elevation={3} sx={{ padding: 3 }}>
+          <Typography variant="h4" align="center" gutterBottom>
+            方塊文明
+          </Typography>
 
-      {/* 只有在還沒選擇隊伍時才顯示選單 */}
-      {!isConfirmed && (
-        <div>
-          <p>請選擇隊伍</p>
-          <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)}>
-            <option value="" disabled>--- 請選擇 ---</option>
-            {teams.map((team) => (
-              <option key={team.id} value={team.id}>{team.name}</option>
-            ))}
-          </select>
-          
-          {selectedTeamInfo && (
-            <p>隊伍描述: {selectedTeamInfo.description}</p>
+          {!isConfirmed && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                請選擇隊伍
+              </Typography>
+              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                <InputLabel>--- 請選擇 ---</InputLabel>
+                <Select
+                  value={selectedTeam}
+                  onChange={(e) => setSelectedTeam(e.target.value)}
+                  label="--- 請選擇 ---"
+                >
+                  {teams.map((team) => (
+                    <MenuItem key={team.id} value={team.id}>
+                      {team.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {selectedTeamInfo && (
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                  隊伍描述: {selectedTeamInfo.description}
+                </Typography>
+              )}
+
+              {selectedTeamInfo && (
+                <Button variant="contained" onClick={handleConfirmTeam} disabled={!selectedTeam} fullWidth>
+                  確認
+                </Button>
+              )}
+            </Box>
           )}
 
-          {selectedTeamInfo && (<button onClick={handleConfirmTeam} disabled={!selectedTeam}>確認</button>)}
-        </div>
-      )}
+          {isConfirmed && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                你的隊伍是: {selectedTeamInfo?.name || '無資料'}
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                遊戲狀態：
+                {gameState?.status === 'waiting' && gameState?.text}
+                {gameState?.status === 'voting' && !isSelectedAction && gameState?.text}
+                {gameState?.status === 'voting' && isSelectedAction && '等待其他人選擇行動...'}
+                {gameState?.status === 'generating' && '等待世界的改變...'}
+              </Typography>
 
-      {/* 只有在選擇隊伍後才顯示遊戲資訊和刷新按鈕 */}
-      {isConfirmed && (
-        <div>
-          <p> 你的隊伍是: {selectedTeamInfo?.name || '無資料'}</p>
-          <p>遊戲狀態：
-            {gameState?.status === 'waiting' && gameState?.text}
-            {gameState?.status === 'voting' && !isSelectedAction && gameState?.text}
-            {gameState?.status === 'voting' && isSelectedAction && '等待其他人選擇行動...'}
-            {gameState?.status === 'generating' && '等待世界的改變...'}
-          </p>
-            {/* 新增選擇行動的下拉選單 */}
-            {gameState?.status === 'voting' && !isSelectedAction && (
-              <div>
-                <p>選擇你的行動：</p>
-                <select value={selectedAction} onChange={(e) => setSelectedAction(e.target.value)}>
-                  <option value="" disabled>--- 請選擇行動 ---</option>
-                  {teamsData[selectedTeam]?.actions?.map((action) => (
-                    <>
-                      <option key={action.id} value={action.id}>{action.title}</option>
-                    </>
-                  ))}
-                </select>
-                <p>行動描述：{teamsData[selectedTeam]?.actions[selectedAction]?.description}</p>
-                <button onClick={handleSubmitChoice} disabled={!selectedAction}>提交行動</button>
-              </div>
-            )}
-        </div>
-      )}
+              {gameState?.status === 'voting' && !isSelectedAction && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    選擇你的行動：
+                  </Typography>
+                  <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                    <InputLabel>--- 請選擇行動 ---</InputLabel>
+                    <Select
+                      value={selectedAction}
+                      onChange={(e) => setSelectedAction(e.target.value)}
+                      label="--- 請選擇行動 ---"
+                    >
+                      {teamsData[selectedTeam]?.actions?.map((action) => (
+                        <MenuItem key={action.id} value={action.id}>
+                          {action.title}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    行動描述：{teamsData[selectedTeam]?.actions[selectedAction]?.description}
+                  </Typography>
+                  <Button variant="contained" onClick={handleSubmitChoice} disabled={selectedAction === ""} fullWidth>
+                    提交行動
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          )}
 
-      {isConfirmed && (gameState?.status === 'waiting' || gameState?.status === 'generating' || isSelectedAction) && (
-        <div>
-          <button onClick={handleRefresh}>刷新頁面</button>
-        </div>
-      )}
+          {(isConfirmed &&
+            (gameState?.status === 'waiting' ||
+              gameState?.status === 'generating' ||
+              isSelectedAction)) && (
+            <Box sx={{ mt: 2 }}>
+              <Button variant="outlined" onClick={handleRefresh} fullWidth>
+                刷新頁面
+              </Button>
+            </Box>
+          )}
 
-      {/* 開發用的按鈕，刪除所有 cookie */}
-      <button onClick={handleDeleteCookies} style={{ marginTop: '20px', backgroundColor: 'red', color: 'white' }}>
-        刪除所有 cookie
-      </button>
-      {/* <div>this is a test message.</div> */}
-    </div>
+          <Box sx={{ mt: 2 }}>
+            <Button variant="text" onClick={handleDeleteCookies} color="error" fullWidth>
+              刪除所有 cookie
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   );
 }
 

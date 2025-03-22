@@ -46,7 +46,7 @@ async function generateImage(prompt, n) {
       return images;
     } catch (error) {
       console.error('Error generating image:', error);
-      throw error;
+      return undefined;
     }
 } 
 

@@ -139,15 +139,16 @@ app.post('/next-step', async (req, res) => {
     while (attempt < 5) {
       try {
         console.log('呼叫 LLM 生成新故事中...');
-        await generateStory(teamsData, storyData, images);
+        await generateStory(currentGameState, teamsData, storyData, images);
         // 生成成功後，更新遊戲狀態
         currentGameState.status = 'voting';
         currentGameState.text = gameStateConfigs['voting'].text;
         currentGameState.currentStep += 1;
         console.log('新故事生成成功！');
-        break;  // 生成成功，跳出迴圈
+        break;
       } catch (err) {
         console.error("呼叫 LLM 失敗，重新嘗試中...", err);
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
       attempt += 1;
     }

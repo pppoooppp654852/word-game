@@ -116,11 +116,31 @@ function Dashboard() {
         }}
       >
         {/* 左側：故事進展 */}
-        <Grid item xs={5} sx={{ padding: 2, overflow: 'hidden', height: '50%' }}>
+        <Grid
+          item
+          xs={5}
+          sx={{
+            padding: 2,
+            overflowY: 'auto',
+            height: '55%',
+            // 自訂 scrollbar 樣式
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              borderRadius: '4px',
+            },
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(255, 255, 255, 0.3) transparent',
+          }}
+        >
           <Typography variant="h3" gutterBottom sx={{ marginTop: 5 }}>
             方塊文明
           </Typography>
-
           <Typography variant="body1">{renderStoryText()}</Typography>
         </Grid>
 
