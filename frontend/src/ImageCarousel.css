@@ -1,0 +1,24 @@
+/* ImageCarousel.css */
+.carousel-container {
+    width: 100%;
+    max-width: 800px; /* 可依需求調整 */
+    margin: auto auto;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .carousel-image {
+    width: 100%;
+    height: auto;
+    animation: fadeIn 1s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  

@@ -1,13 +1,12 @@
 //storyGenerator.js
-
 const axios = require('axios');
+const { generateSDPrompt, generateImage } = require('./imageGenerator');
 
-async function generateStory(teamsData, storyData) {
-  // 1. 先整理出各陣營「多數行動」或所有行動投票結果
+async function generateStory(teamsData, storyData, images) {
+  // 1. 整理各陣營「多數行動」
   const majorityChoices = {};
   for (let teamId in teamsData) {
     const team = teamsData[teamId];
-    // 找出最高 count 的 action
     let maxCount = -1;
     let chosenAction = null;
     team.actions.forEach((action) => {
@@ -23,6 +22,15 @@ async function generateStory(teamsData, storyData) {
       chosenActionId: chosenAction?.id || 0,
     };
   }
+
+  // 2. 同時啟動圖片生成流程
+  // 針對每個 team 的行動文字各自呼叫 generateSDPrompt，再將結果傳給 generateImage
+  const imagePromises = Object.values(majorityChoices).map(m => {
+    const promptText = `${m.teamName}: ${m.chosenActionTitle} - ${m.chosenActionDescription}`;
+    // 先產生適合 Stable Diffusion 的 prompt，再用該 prompt 產生多張圖片
+    return generateSDPrompt(promptText)
+      .then(sdPrompt => generateImage(sdPrompt, 3));  // 假設每個 prompt 產 3 張圖
+  });
 
   // 2. 準備 LLM prompt
   const systemMessage = {
@@ -138,72 +146,82 @@ async function generateStory(teamsData, storyData) {
   };  
 
   const body = {
-    model: "o1",
+    model: "gpt-4o",
     messages: [systemMessage, userMessage],
   };
+  
+  const apiKey = process.env.OPENAI_API_KEY;
   console.log("呼叫LLM的body:", JSON.stringify(body, null, 2));
 
-  const apiKey = process.env.OPENAI_API_KEY;
+
+  // 4. 同時發起故事生成與圖片生成的 API call
+  const storyPromise = axios.post(
+    "https://api.rdsec.trendmicro.com/prod/aiendpoint/v1/chat/completions",
+    body,
+    {
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  // 使用 Promise.all 同步等待兩個 API call 完成
+  let storyResponse, imagesResult;
 
   try {
     // 紀錄 API 呼叫開始時間
     const startTime = Date.now();
-
-    const response = await axios.post(
-      "https://api.rdsec.trendmicro.com/prod/aiendpoint/v1/chat/completions",
-      body,
-      {
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    // 紀錄 API 呼叫結束時間，並計算所花費的時間
+    [storyResponse, imagesResult] = await Promise.all([
+      storyPromise,
+      Promise.all(imagePromises) // <== 正確：這樣 imagePromises 才會變成一個 Promise
+    ]);
+    // 紀錄 API 呼叫結束時間
     const endTime = Date.now();
-    const elapsedTime = endTime - startTime;
-    console.log(`呼叫 LLM API 花費的時間: ${elapsedTime / 1000.0} 秒`);
-
-    // 解析 LLM 回覆
-    const assistantMessage = response.data.choices[0].message.content;
-    console.log("LLM 回應原始內容:", assistantMessage);
-
-    const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error("找不到有效的 JSON 內容:", assistantMessage);
-      throw new Error("LLM 回傳的內容不包含有效的 JSON 結構。");
-    }
-
-    let newData;
-    try {
-      newData = JSON.parse(jsonMatch[0]);
-    } catch (err) {
-      console.error("解析 LLM 回傳的 JSON 失敗:", err);
-      throw new Error("LLM 回傳非 JSON 格式，或 JSON 無法解析。");
-    }
-
-    // 將目前的故事放到history中
-    storyData.history += "\n" + storyData.text;
-    // 更新 storyData 和 teamsData
-    storyData.text = newData.story || "故事尚未生成。";
-
-    for (let teamId in newData.teams) {
-      if (!teamsData[teamId]) continue;
-      factor = 1.0 + Math.random() * 0.2;
-      teamsData[teamId].economy = Math.floor(newData.teams[teamId].economy * factor);
-      teamsData[teamId].technology = Math.floor(newData.teams[teamId].technology * factor);
-      teamsData[teamId].score = Math.floor(newData.teams[teamId].score * factor);
-
-      teamsData[teamId].actions = newData.teams[teamId].actions;
-      for (let i = 0; i < teamsData[teamId].actions.length; i++) {
-        teamsData[teamId].actions[i].count = 0;
-      }
-    }
+    console.log(`呼叫 LLM API 花費的時間: ${ (endTime - startTime) / 1000.0 } 秒`);
   } catch (err) {
-    console.error("呼叫 LLM 失敗：", err);
-    throw new Error("無法與 LLM 伺服器通訊。");
+    console.error("呼叫 API 失敗：", err);
+    throw new Error("無法與 LLM 或圖片生成伺服器通訊。");
   }
+
+  // 解析 LLM 回覆
+  const assistantMessage = storyResponse.data.choices[0].message.content;
+  console.log("LLM 回應原始內容:", assistantMessage);
+
+  const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    console.error("找不到有效的 JSON 內容:", assistantMessage);
+    throw new Error("LLM 回傳的內容不包含有效的 JSON 結構。");
+  }
+
+  let newData;
+  try {
+    newData = JSON.parse(jsonMatch[0]);
+  } catch (err) {
+    console.error("解析 LLM 回傳的 JSON 失敗:", err);
+    throw new Error("LLM 回傳非 JSON 格式，或 JSON 無法解析。");
+  }
+
+  // 更新故事歷史與內容
+  storyData.history += "\n" + storyData.text;
+  storyData.text = newData.story || "故事尚未生成。";
+
+  for (let teamId in newData.teams) {
+    if (!teamsData[teamId]) continue;
+    factor = 1.0 + Math.random() * 0.2;
+    teamsData[teamId].economy = Math.floor(newData.teams[teamId].economy * factor);
+    teamsData[teamId].technology = Math.floor(newData.teams[teamId].technology * factor);
+    teamsData[teamId].score = Math.floor(newData.teams[teamId].score * factor);
+
+    teamsData[teamId].actions = newData.teams[teamId].actions;
+    for (let i = 0; i < teamsData[teamId].actions.length; i++) {
+      teamsData[teamId].actions[i].count = 0;
+    }
+  }
+
+  // 5. 更新 storyData.images 為圖片生成的結果
+  images.length = 0;
+  imagesResult.flat().forEach(img => images.push(img));  
 }
 
 // 匯出 function

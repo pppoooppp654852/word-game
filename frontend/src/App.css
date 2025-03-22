@@ -36,3 +36,12 @@
     transform: rotate(360deg);
   }
 }
+
+/* App.css 或 index.css, 全域設定 */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 隱藏捲軸 */
+  background-color: #000; /* 若背景沒載入時的默認底色 */
+}
