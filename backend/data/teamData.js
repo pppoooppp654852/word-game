@@ -25,7 +25,7 @@ const teamsData = {
         "id": 0,
         "title": "紅石機械奇蹟",
         "description": "這個國度位於炎熱廣大的沙漠，以「紅石科技」為立國之本。他們的村民精通紅石電路，打造了雄偉的金字塔作為帝國的核心。帝國利用先進的自動化機械與紅石機關來統治經濟與戰場，意圖以科技力量征服整個方塊大陸。",
-        "count": 1
+        "count": 0
       },
       {
         "id": 1,
@@ -46,7 +46,7 @@ const teamsData = {
         "count": 0
       }
     ],
-    population = 25
+    population = 0
   ),
   2: new Team(
     2,
@@ -66,7 +66,7 @@ const teamsData = {
         "id": 1,
         "title": "巨樹建築復興計劃",
         "description": "在世界各地種植巨型橡樹，建造宛如天空之城的森林要塞，震懾所有敵對勢力！",
-        "count": 1
+        "count": 0
       },
       {
         "id": 2,
@@ -81,7 +81,7 @@ const teamsData = {
         "count": 0
       }
     ],
-    population = 30
+    population = 0
   ),
   3: new Team(
     3,
@@ -95,7 +95,7 @@ const teamsData = {
         "id": 0,
         "title": "極寒戰士訓練",
         "description": "對戰士進行最嚴苛的冰原訓練，只有能在零下環境中挖掘下界合金的勇者才能晉升為精英戰士！",
-        "count": 1
+        "count": 0
       },
       {
         "id": 1,
@@ -116,7 +116,7 @@ const teamsData = {
         "count": 0
       }
     ],
-    population = 22
+    population = 0
   ),
 };
   

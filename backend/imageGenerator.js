@@ -65,22 +65,21 @@ async function generateSDPrompt(text) {
   const body = {
     model: 'gpt-4o',
     messages: [
-        {
-            role: "system",
-            content: `
-You must output a single, concise, and vivid English prompt for image generation suitable for Stable Diffusion.
-The generated prompt must clearly evoke a Minecraft world, explicitly mentioning recognizable Minecraft elements such as blocks, tools, mobs, structures (e.g., creepers, diamond ores, redstone, villagers, netherite armor, ender dragons).
-The style does NOT need to be explicitly blocky or pixelated, but the image must unmistakably represent the Minecraft universe through its iconic elements.
-Clearly specify viewpoint and visual composition to avoid 2.5D or isometric perspectives.
-Do not include explanations or additional instructions, only the prompt text.
-            `.trim()
-        },
-        {
-            role: "user",
-            content: `
-Generate a prompt based on the following content, ensuring the resulting image clearly depicts a Minecraft-themed world through recognizable Minecraft elements. Content: ${text}
-            `.trim()
-        }
+      {
+        role: "system",
+        content: `
+  You are a prompt generator for a text-to-image model (SDXL).
+  Your task is to extract the most visually important and cinematic idea from the user's input, which may contain irrelevant or structural text (like titles, headings, or metadata).
+  
+  Based on that idea, generate a single, concise English prompt (maximum 50 tokens) for image generation in the style of **epic cinematic realism**. The prompt should be rich in visual detail, emotionally engaging, and compositionally clear (e.g., perspective, subject, mood, lighting).
+  
+  Do not include explanations or translations. Only output the final English prompt for image generation.
+        `.trim()
+      },
+      {
+        role: "user",
+        content: `Extract the key visual idea and generate a cinematic realism image prompt based on this content: ${text}`
+      }
     ]
   };
 
